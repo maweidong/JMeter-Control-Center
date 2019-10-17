@@ -29,6 +29,19 @@ logger = logging.getLogger(__name__)
 dateconv = np.vectorize(datetime.datetime.fromtimestamp)
 
 
+def index(request):
+    context = {}
+    context['projects'] = Project.objects.distinct()
+    if request.method == 'POST':
+        project_id = request.POST.get('project_id', '')
+        test_id = request.POST.get('test_id', '')
+        if project_id:
+            context['project_'] = Project.objects.get(id=project_id)
+            context['tests'] = Test.objects.filter(project_id=project_id)
+        if test_id:
+            context['test_'] = Test.objects.get(id=test_id)
+    return render(request, 'analyzer/index.html', context)
+
 class Round(Func):
     function = 'ROUND'
     template = '%(function)s(%(expressions)s, 1)'
@@ -275,24 +288,6 @@ def prev_test_id(request, test_id):
     return JsonResponse([list(t)[1]], safe=False)
 
 
-def get_test_aggregate_table(test_id):
-    '''Return aggregate data for the test'''
-
-    aggregate_table = TestActionAggregateData.objects.annotate(url=F('action__url')).filter(test_id=test_id). \
-        values('url',
-               'action_id',
-               'data')
-    return aggregate_table
-
-
-def test_report(request, test_id):
-    '''Generate HTML page with report for the test'''
-    test = Test.objects.get(id=test_id)
-    aggregate_table = get_test_aggregate_table(test_id)
-    return render(request, 'report.html', {
-        'test': test,
-        'aggregate_table': aggregate_table
-    })
 
 
 def composite(request, project_id):

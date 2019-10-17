@@ -1,8 +1,10 @@
 from __future__ import unicode_literals
 
-from django.db import models
-from django.contrib.postgres.fields import JSONField
 from django.contrib import admin
+from django.contrib.postgres.fields import JSONField
+from django.db import models
+from django.db.models.expressions import F, RawSQL
+
 # Create your models here.
 from administrator.models import JMeterProfile, User
 
@@ -58,13 +60,25 @@ class Test(models.Model):
             ('show', 'project', 'start_time'),
         ]
 
+    def aggregate_table(self):
+        '''Return aggregate data for the test'''
+
+        return TestActionAggregateData.objects.annotate(
+            url=F('action__url')
+        ).filter(test_id=self.id).values('url', 'action_id', 'data')
+
     def __str__(self):
         return self.display_name
 
 
+
+
+
 class TestData(models.Model):
-    test = models.ForeignKey(Test)
-    data_resolution = models.ForeignKey(TestDataResolution, default=1)
+    test = models.ForeignKey(Test, on_delete=models.CASCADE)
+    data_resolution = models.ForeignKey(
+        TestDataResolution, on_delete=models.CASCADE, default=1
+    )
     source = models.CharField(max_length=100, default='default')
     data = JSONField()
 
@@ -91,9 +105,9 @@ class Error(models.Model):
 
 
 class TestError(models.Model):
-    test = models.ForeignKey(Test)
-    action = models.ForeignKey(Action)
-    error = models.ForeignKey(Error)
+    test = models.ForeignKey(Test, on_delete=models.CASCADE)
+    action = models.ForeignKey(Action, on_delete=models.CASCADE)
+    error = models.ForeignKey(Error, on_delete=models.CASCADE)
     count = models.IntegerField(default=0)
 
     class Meta:
@@ -101,9 +115,14 @@ class TestError(models.Model):
 
 
 class TestActionData(models.Model):
-    test = models.ForeignKey(Test)
-    data_resolution = models.ForeignKey(TestDataResolution, default=1)
-    action = models.ForeignKey(Action, null=True, blank=True)
+    test = models.ForeignKey(Test, on_delete=models.CASCADE)
+    data_resolution = models.ForeignKey(
+        TestDataResolution, on_delete=models.CASCADE,
+        default=1
+    )
+    action = models.ForeignKey(
+        Action, on_delete=models.CASCADE, null=True, blank=True
+    )
     data = JSONField()
 
     class Meta:
@@ -114,7 +133,7 @@ class TestActionData(models.Model):
 
 
 class TestAggregate(models.Model):
-    test = models.ForeignKey(Test)
+    test = models.ForeignKey(Test, on_delete=models.CASCADE)
     data = JSONField()
 
     class Meta:
@@ -122,8 +141,8 @@ class TestAggregate(models.Model):
 
 
 class TestActionAggregateData(models.Model):
-    test = models.ForeignKey(Test)
-    action = models.ForeignKey(Action)
+    test = models.ForeignKey(Test, on_delete=models.CASCADE)
+    action = models.ForeignKey(Action, on_delete=models.CASCADE)
     data = JSONField()
 
     class Meta:
@@ -142,10 +161,12 @@ class Server(models.Model):
 
 
 class ServerMonitoringData(models.Model):
-    test = models.ForeignKey(Test)
-    data_resolution = models.ForeignKey(TestDataResolution, default=1)
+    test = models.ForeignKey(Test, on_delete=models.CASCADE)
+    data_resolution = models.ForeignKey(
+        TestDataResolution, on_delete=models.CASCADE, default=1
+    )
     source = models.CharField(max_length=100, default='default')
-    server = models.ForeignKey(Server)
+    server = models.ForeignKey(Server, on_delete=models.CASCADE)
     data = JSONField()
 
     class Meta:

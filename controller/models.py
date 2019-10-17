@@ -296,7 +296,7 @@ class LoadGenerator(models.Model):
 
 class JmeterInstance(models.Model):
     test_running = models.ForeignKey(TestRunning, on_delete=models.CASCADE)
-    load_generator = models.ForeignKey(LoadGenerator)
+    load_generator = models.ForeignKey(LoadGenerator, on_delete=models.CASCADE)
     pid = models.IntegerField(default=0)
     port = models.IntegerField(default=0)
     jmeter_dir = models.CharField(max_length=300, default="")
@@ -311,7 +311,7 @@ class JmeterInstance(models.Model):
 class ActivityLog(models.Model):
     date = models.DateTimeField(auto_now_add=True, blank=True)
     action = models.CharField(max_length=1000, default="")
-    load_generator = models.ForeignKey(LoadGenerator)
+    load_generator = models.ForeignKey(LoadGenerator, on_delete=models.CASCADE)
     data = JSONField()
 
     class Meta:
